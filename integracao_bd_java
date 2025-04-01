@@ -1,0 +1,368 @@
+// 1. Pacote e imports
+package com.example.petagenda;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
+// 2. Classe Principal de Aplicação com @SpringBootApplication
+@SpringBootApplication
+public class PetAgendaApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(PetAgendaApplication.class, args);
+    }
+
+    // 3. Comando de inicialização (exemplo de inserir dados)
+    @Bean
+    public CommandLineRunner run(PetAgendaService petAgendaService) {
+        return args -> {
+            // Exemplo de criação de um cliente e pet, com agendamento
+            Cliente cliente = petAgendaService.criarCliente(new Cliente("João Silva", "(11) 98765-4321", "joao@email.com"));
+            Pet pet = petAgendaService.criarPet(new Pet("Rex", Pet.Especie.CACHORRO, "Labrador", 5, cliente));
+            Servico servico = petAgendaService.criarServico(new Servico("Banho", "Banho para cachorros", 50.00));
+            Agendamento agendamento = petAgendaService.criarAgendamento(new Agendamento(LocalDateTime.now(), pet, servico, Agendamento.Status.PENDENTE));
+            System.out.println("Agendamento criado: " + agendamento.getId());
+        };
+    }
+}
+
+// 4. Entidades JPA
+
+@Entity
+class Cliente {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String nome;
+    private String telefone;
+    private String email;
+
+    // Construtores, Getters e Setters
+    public Cliente() {}
+
+    public Cliente(String nome, String telefone, String email) {
+        this.nome = nome;
+        this.telefone = telefone;
+        this.email = email;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+
+@Entity
+class Pet {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String nome;
+    private Especie especie;
+    private String raca;
+    private Integer idade;
+
+    @ManyToOne
+    @JoinColumn(name = "cliente_id")
+    private Cliente cliente;
+
+    // Construtores, Getters e Setters
+    public Pet() {}
+
+    public Pet(String nome, Especie especie, String raca, Integer idade, Cliente cliente) {
+        this.nome = nome;
+        this.especie = especie;
+        this.raca = raca;
+        this.idade = idade;
+        this.cliente = cliente;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public Especie getEspecie() {
+        return especie;
+    }
+
+    public void setEspecie(Especie especie) {
+        this.especie = especie;
+    }
+
+    public String getRaca() {
+        return raca;
+    }
+
+    public void setRaca(String raca) {
+        this.raca = raca;
+    }
+
+    public Integer getIdade() {
+        return idade;
+    }
+
+    public void setIdade(Integer idade) {
+        this.idade = idade;
+    }
+
+    public Cliente getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+    }
+
+    public enum Especie {
+        CACHORRO, GATO, OUTRO
+    }
+}
+
+@Entity
+class Servico {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String nome;
+    private String descricao;
+    private Double preco;
+
+    // Construtores, Getters e Setters
+    public Servico() {}
+
+    public Servico(String nome, String descricao, Double preco) {
+        this.nome = nome;
+        this.descricao = descricao;
+        this.preco = preco;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public Double getPreco() {
+        return preco;
+    }
+
+    public void setPreco(Double preco) {
+        this.preco = preco;
+    }
+}
+
+@Entity
+class Agendamento {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private LocalDateTime dataHora;
+
+    @ManyToOne
+    @JoinColumn(name = "pet_id")
+    private Pet pet;
+
+    @ManyToOne
+    @JoinColumn(name = "servico_id")
+    private Servico servico;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    // Construtores, Getters e Setters
+    public Agendamento() {}
+
+    public Agendamento(LocalDateTime dataHora, Pet pet, Servico servico, Status status) {
+        this.dataHora = dataHora;
+        this.pet = pet;
+        this.servico = servico;
+        this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getDataHora() {
+        return dataHora;
+    }
+
+    public void setDataHora(LocalDateTime dataHora) {
+        this.dataHora = dataHora;
+    }
+
+    public Pet getPet() {
+        return pet;
+    }
+
+    public void setPet(Pet pet) {
+        this.pet = pet;
+    }
+
+    public Servico getServico() {
+        return servico;
+    }
+
+    public void setServico(Servico servico) {
+        this.servico = servico;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public enum Status {
+        PENDENTE, CONFIRMADO, CANCELADO, CONCLUIDO
+    }
+}
+
+// 5. Repositórios
+
+interface ClienteRepository extends JpaRepository<Cliente, Long> {}
+
+interface PetRepository extends JpaRepository<Pet, Long> {}
+
+interface ServicoRepository extends JpaRepository<Servico, Long> {}
+
+interface AgendamentoRepository extends JpaRepository<Agendamento, Long> {}
+
+// 6. Serviço de Negócio (CRUD)
+
+@Service
+class PetAgendaService {
+
+    @Autowired
+    private ClienteRepository clienteRepository;
+
+    @Autowired
+    private PetRepository petRepository;
+
+    @Autowired
+    private ServicoRepository servicoRepository;
+
+    @Autowired
+    private AgendamentoRepository agendamentoRepository;
+
+    public Cliente criarCliente(Cliente cliente) {
+        return clienteRepository.save(cliente);
+    }
+
+    public Pet criarPet(Pet pet) {
+        return petRepository.save(pet);
+    }
+
+    public Servico criarServico(Servico servico) {
+        return servicoRepository.save(servico);
+    }
+
+    public Agendamento criarAgendamento(Agendamento agendamento) {
+        return agendamentoRepository.save(agendamento);
+    }
+}
+
+// 7. Controlador REST
+
+@RestController
+@RequestMapping("/api/pet-agenda")
+class PetAgendaController {
+
+    @Autowired
+    private PetAgendaService petAgendaService;
+
+    @PostMapping("/clientes")
+    public Cliente criarCliente(@RequestBody Cliente cliente) {
+        return petAgendaService.criarCliente(cliente);
+    }
+
+    @PostMapping("/pets")
+    public Pet criarPet(@RequestBody Pet pet) {
+        return petAgendaService.criarPet(pet);
+    }
+
+    @PostMapping("/servicos")
+    public Servico criarServico(@RequestBody Servico servico) {
+        return petAgendaService.criarServico(servico);
+    }
+
+    @PostMapping("/agendamentos")
+    public Agendamento criarAgendamento(@RequestBody Agendamento agendamento) {
+        return petAgendaService.criarAgendamento(agendamento);
+    }
+}
